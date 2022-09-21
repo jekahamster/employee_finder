@@ -1,12 +1,14 @@
-import os 
+import os
+from symbol import argument 
 import sys
 import pathlib
 import argparse
 import pickle
 import json
+from defines import DB_PATH
 
 from parsers import WorkUaParser
-from parser_builder import build_parser
+from argument_parser_builder import build_argument_parser
 from parsers.driver_builder import build_chrome_driver
 
 
@@ -45,15 +47,30 @@ def _check_ip(driver):
 
 
 def main(args):
-    driver = build_chrome_driver(detach=False, no_logging=False, tor=True)
-    ip = _check_ip(driver)
-    print("IP:", ip)
+    arg_parser = build_argument_parser()
+    arguments = arg_parser.parse_args(args)
 
-    parser = WorkUaParser(driver=driver)
+    db_path = arguments.db_path or DB_PATH
+    n_pages = arguments.n_pages
+    tor = arguments.tor
+    detach = arguments.detach
+    no_logging = arguments.no_logging
+    headless = arguments.headless
+
+    driver = build_chrome_driver(
+        headless=headless, 
+        detach=detach, 
+        no_logging=no_logging, 
+        tor=tor
+    )
+    
+    if tor:
+        ip = _check_ip(driver)
+        print("IP:", ip)
+
+    parser = WorkUaParser(driver=driver, db_path=db_path, n_pages=n_pages)
     resumes_data = parser.get_data()
 
-    for resume_data in resumes_data:
-        print(resume_data)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

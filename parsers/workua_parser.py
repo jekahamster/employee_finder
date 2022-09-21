@@ -1,12 +1,15 @@
 import os
-from re import M
 import selenium
+import sqlite3
+import warnings
 
+from . import storage
 from .base_parser import BaseParser
 from .driver_builder import build_chrome_driver
-from defines import DOWNLOAD_ROOT
+from defines import DB_PATH, DOWNLOAD_ROOT
 from defines import WEBDRIVER_PATH
 from defines import BINARY_LOCATION
+from defines import DB_PATH
 from selenium import webdriver
 from selenium.webdriver import chrome 
 from selenium.webdriver.common.by import By
@@ -26,11 +29,12 @@ class WorkUaParser(BaseParser):
         "personal_information_item_values": 'div[id^="resume_"] .row .dl-horizontal dd',
     }
     
-    def __init__(self, driver=None):
-        self._n_pages = 1
+    def __init__(self, driver=None, db_path=DB_PATH, n_pages=100):
+        self._n_pages = n_pages
         self._page_url = "https://www.work.ua/resumes-it/?page={}".format
 
         self._driver = driver or build_chrome_driver()
+        self._storage = storage.Storage(db_path)
 
     def sign_in(self, cookies):
         url = "https://www.work.ua/"
@@ -46,6 +50,20 @@ class WorkUaParser(BaseParser):
         os.system("pause")
 
     def _get_resume_data(self, url):
+        user_by_url = self._storage.find_by_url(url)
+        if user_by_url:
+            print(f"User by url {url} in base")
+            return {
+                "name": user_by_url["first_name"],
+                "position": None,
+                "salary": None,
+                "employment": None,
+                "age": None,
+                "city": None,
+                "other_cities": None,
+                "url": url
+            }
+            
         self._driver.get(url)
 
         resume_data = {
@@ -145,7 +163,26 @@ class WorkUaParser(BaseParser):
         for resume_url in resume_urls:
             resume_data = self._get_resume_data(resume_url)
             resumes_data.append(resume_data)
+            
+            try:
+                self._storage.insert(
+                    first_name=resume_data["name"],
+                    url=resume_data["url"]
+                )
+            except sqlite3.IntegrityError:
+                warnings.warn(f"Person {resume_data['url']} in database")
         
+        # query_params = {
+        #     "first_name": resume_data["name"], 
+        #     "last_name": None, 
+        #     "middle_name": None, 
+        #     "email": None, 
+        #     "phone": None, 
+        #     "date": None, 
+        #     "origin": "workua", 
+        #     "url": resume_data["url"]
+        # }
+
         return resumes_data
 
 
