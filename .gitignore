@@ -3,6 +3,7 @@ cookies
 geckodriver.log
 problems_solutions.txt
 webdrivers
+test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
