@@ -96,7 +96,7 @@ class WorkUaParser(BaseParser):
         except selenium.common.exceptions.NoSuchElementException:
             position = position_salary.text
 
-        resume_data["postion"] = position
+        resume_data["position"] = position
         resume_data["salary"] = salary
 
         personal_information_item_names = self._driver.find_elements(
