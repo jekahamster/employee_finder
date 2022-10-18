@@ -5,6 +5,7 @@ ROOT_DIR = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
 DRIVERS_ROOT = ROOT_DIR / "webdrivers"
 DOWNLOAD_ROOT = ROOT_DIR / "downloads"
 DB_PATH = ROOT_DIR / "workuadb.db"
+TABLE_NAME = "employee_finder_api_employees"
 
 # Chrome
 WEBDRIVER_PATH = DRIVERS_ROOT / "chromedriver.exe"
