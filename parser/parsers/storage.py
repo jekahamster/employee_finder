@@ -1,11 +1,12 @@
 import sqlite3
 
 from defines import DB_PATH
+from defines import TABLE_NAME
 
 
 def _create_if_not_exist(curr):
-    query = """
-        CREATE TABLE IF NOT EXISTS `user_data` (
+    query = f"""
+        CREATE TABLE IF NOT EXISTS `{TABLE_NAME}` (
             `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
             `first_name` VARCHAR(255),
             `last_name` VARCHAR(255),
@@ -49,8 +50,8 @@ class Storage:
         origin=None,
         url=None):
         
-        query = """
-            INSERT INTO `user_data` (first_name, last_name, middle_name, email, phone, date, origin, url)
+        query = f"""
+            INSERT INTO `{TABLE_NAME}` (first_name, last_name, middle_name, email, phone, date, origin, url)
             VALUES (:first_name, :last_name, :middle_name, :email, :phone, :date, :origin, :url);
         """
         
@@ -69,9 +70,9 @@ class Storage:
         self._db.commit()
 
     def find_by_url(self, url):
-        query = """
+        query = f"""
             SELECT *
-            FROM `user_data`
+            FROM `{TABLE_NAME}`
             WHERE url = :url
         """
         params = {"url": url}

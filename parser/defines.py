@@ -4,7 +4,7 @@ import pathlib
 ROOT_DIR = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
 DRIVERS_ROOT = ROOT_DIR / "webdrivers"
 DOWNLOAD_ROOT = ROOT_DIR / "downloads"
-DB_PATH = ROOT_DIR / "workuadb.db"
+DB_PATH = ROOT_DIR / ".." / "employee_finder_web" / "db.sqlite3"
 TABLE_NAME = "employee_finder_api_employees"
 
 # Chrome
