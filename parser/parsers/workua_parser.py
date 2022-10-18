@@ -6,6 +6,7 @@ import warnings
 from . import storage
 from .base_parser import BaseParser
 from .driver_builder import build_chrome_driver
+from tqdm import tqdm
 from defines import DB_PATH, DOWNLOAD_ROOT
 from defines import WEBDRIVER_PATH
 from defines import BINARY_LOCATION
@@ -55,7 +56,7 @@ class WorkUaParser(BaseParser):
             print(f"User by url {url} in base")
             return {
                 "name": user_by_url["first_name"],
-                "position": None,
+                "position": user_by_url["position"],
                 "salary": None,
                 "employment": None,
                 "age": None,
@@ -155,18 +156,22 @@ class WorkUaParser(BaseParser):
         resume_urls = []
         resumes_data = []
 
-        for page_index in range(1, self._n_pages+1):
+        print("Collecting pages")
+        for page_index in tqdm(range(1, self._n_pages+1)):
             url = self._page_url(page_index)
             resume_urls_ = self._get_resume_pages(url)
             resume_urls.extend(resume_urls_)
         
-        for resume_url in resume_urls:
+        print("Collecting resumes")
+        for resume_url in tqdm(resume_urls):
             resume_data = self._get_resume_data(resume_url)
             resumes_data.append(resume_data)
             
             try:
                 self._storage.insert(
                     first_name=resume_data["name"],
+                    position=resume_data["position"],
+                    origin="workua",
                     url=resume_data["url"]
                 )
             except sqlite3.IntegrityError:

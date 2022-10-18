@@ -8,7 +8,7 @@ DB_PATH = ROOT_DIR / ".." / "employee_finder_web" / "db.sqlite3"
 TABLE_NAME = "employee_finder_api_employees"
 
 # Chrome
-WEBDRIVER_PATH = DRIVERS_ROOT / "chromedriver.exe"
+WEBDRIVER_PATH = DRIVERS_ROOT / "chromedriver_106.exe"
 BINARY_LOCATION = "C:\\Program Files\\Google\\Chrome Beta\\Application\\chrome.exe"
 
 # # Tor

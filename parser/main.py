@@ -4,8 +4,8 @@ import pathlib
 import argparse
 import pickle
 import json
-from defines import DB_PATH
 
+from defines import DB_PATH
 from parsers import WorkUaParser
 from parsers import RobotaUaParser
 from argument_parser_builder import build_argument_parser
@@ -68,13 +68,14 @@ def main(args):
         ip = _check_ip(driver)
         print("IP:", ip)
 
-    parser = RobotaUaParser(driver=driver, db_path=db_path, n_pages=1)
-    parser.login("i.kuznetsova@ejaw.net", "Ejaw1234")
+    # parser = RobotaUaParser(driver=driver, db_path=db_path, n_pages=1)
+    # parser.login("i.kuznetsova@ejaw.net", "Ejaw1234")
     # resumes_data = parser.get_data()
     # parser.login("i.kuznetsova@ejaw.net", "Ejaw1234")
     
-    # parser.get_data()
-    parser._get_resume_data("https://rabota.ua/ua/candidates/14627255")
+    parser = WorkUaParser(driver=driver, db_path=db_path, n_pages=n_pages)
+    resumes_data = parser.get_data()
+    # parser._get_resume_data("https://rabota.ua/ua/candidates/14627255")
 
 
 if __name__ == "__main__":

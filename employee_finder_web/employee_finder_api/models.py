@@ -25,7 +25,7 @@ class Employees(models.Model):
     position = models.CharField(max_length=255)
     email = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=15, blank=True)
-    data  = models.DateTimeField(default=datetime.datetime.now())
+    date  = models.DateTimeField(default=datetime.datetime.now())
     origin = models.CharField(max_length=255)
     url = models.CharField(max_length=255, unique=True)
 
