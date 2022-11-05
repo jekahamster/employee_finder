@@ -3,9 +3,11 @@ import selenium
 import sqlite3
 import warnings
 
+from datetime import datetime
 from . import storage
 from .base_parser import BaseParser
-from .driver_builder import build_chrome_driver
+from driver_builder import build_chrome_driver
+from tqdm import tqdm
 from defines import DB_PATH, DOWNLOAD_ROOT
 from defines import WEBDRIVER_PATH
 from defines import BINARY_LOCATION
@@ -52,36 +54,14 @@ class WorkUaParser(BaseParser):
     def _get_resume_data(self, url):
         user_by_url = self._storage.find_by_url(url)
         if user_by_url:
-            print(f"User by url {url} in base")
-            return {
-                "name": user_by_url["first_name"],
-                "position": None,
-                "salary": None,
-                "employment": None,
-                "age": None,
-                "city": None,
-                "other_cities": None,
-                "url": url
-            }
+            return user_by_url
             
         self._driver.get(url)
-
-        resume_data = {
-            "name": None,
-            "position": None,
-            "salary": None,
-            "employment": None,
-            "age": None,
-            "city": None,
-            "other_cities": None,
-            "url": url
-        }
 
         name = self._driver.find_element(
             By.CSS_SELECTOR,
             self._resume_page_items_path["name"]
         ).text
-        resume_data["name"] = name
  
         position_salary = self._driver.find_element(
             By.CSS_SELECTOR,
@@ -95,9 +75,6 @@ class WorkUaParser(BaseParser):
             position = ",".join(position_salary.text.split(",")[:-1])
         except selenium.common.exceptions.NoSuchElementException:
             position = position_salary.text
-
-        resume_data["postion"] = position
-        resume_data["salary"] = salary
 
         personal_information_item_names = self._driver.find_elements(
             By.CSS_SELECTOR,
@@ -115,14 +92,26 @@ class WorkUaParser(BaseParser):
             "Готовий працювати:": "other_cities"
         }
 
+        personal_information = {}
         for pii_name, pii_value in zip(personal_information_item_names, personal_information_item_values):
             item_name = pii_name.text
             item_value = pii_value.text
             
             resume_data_key = values_keys[item_name.strip()]
-            resume_data[resume_data_key] = item_value.strip()
-            
+            personal_information[resume_data_key] = item_value.strip()
 
+        resume_data = {
+            "first_name": name,
+            "last_name": "",
+            "middle_name": "",
+            "position": position,
+            "email": "",
+            "phone": "",
+            "date": datetime.today(),
+            "origin": "work.ua",
+            "url": url
+        }
+        
         return resume_data
 
     def _get_resume_pages(self, url):
@@ -135,11 +124,10 @@ class WorkUaParser(BaseParser):
         resume_urls = []
 
         for resume_card in resume_cards:
-            title_ = resume_card.find_element(
-                By.CSS_SELECTOR,
-                self._resumes_page_items_path["resume_cards__title"]
-            )
-
+            # title_ = resume_card.find_element(
+            #     By.CSS_SELECTOR,
+            #     self._resumes_page_items_path["resume_cards__title"]
+            # )
             # resume_title = title_.text
 
             resume_url = resume_card.find_element(
@@ -155,33 +143,30 @@ class WorkUaParser(BaseParser):
         resume_urls = []
         resumes_data = []
 
-        for page_index in range(1, self._n_pages+1):
+        print("Collecting pages")
+        for page_index in tqdm(range(1, self._n_pages+1)):
             url = self._page_url(page_index)
             resume_urls_ = self._get_resume_pages(url)
             resume_urls.extend(resume_urls_)
         
-        for resume_url in resume_urls:
+        print("Collecting resumes")
+        for resume_url in tqdm(resume_urls):
             resume_data = self._get_resume_data(resume_url)
             resumes_data.append(resume_data)
             
             try:
                 self._storage.insert(
-                    first_name=resume_data["name"],
+                    first_name=resume_data["first_name"],
+                    last_name=resume_data["last_name"],
+                    middle_name=resume_data["middle_name"],
+                    position=resume_data["position"],
+                    email=resume_data["email"],
+                    phone=resume_data["phone"],
+                    origin=resume_data["origin"],
                     url=resume_data["url"]
                 )
             except sqlite3.IntegrityError:
                 warnings.warn(f"Person {resume_data['url']} in database")
-        
-        # query_params = {
-        #     "first_name": resume_data["name"], 
-        #     "last_name": None, 
-        #     "middle_name": None, 
-        #     "email": None, 
-        #     "phone": None, 
-        #     "date": None, 
-        #     "origin": "workua", 
-        #     "url": resume_data["url"]
-        # }
 
         return resumes_data
 
