@@ -4,8 +4,8 @@ import pathlib
 import argparse
 
 from defines import DB_PATH
-from parsers import WorkUaParser
-from parsers import RobotaUaParser
+from .parsers import WorkUaParser
+from .parsers import RabotaUaParser
 from argument_parser_builder import build_argument_parser
 from driver_builder import build_chrome_driver
 
