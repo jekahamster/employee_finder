@@ -1,11 +1,13 @@
 import sqlite3
+import datetime
 
 from defines import DB_PATH
+from defines import TABLE_NAME
 
 
 def _create_if_not_exist(curr):
-    query = """
-        CREATE TABLE IF NOT EXISTS `user_data` (
+    query = f"""
+        CREATE TABLE IF NOT EXISTS `{TABLE_NAME}` (
             `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
             `first_name` VARCHAR(255),
             `last_name` VARCHAR(255),
@@ -40,24 +42,26 @@ class Storage:
         self._db.close()
 
     def insert(self,
-        first_name=None,
-        last_name=None,
-        middle_name=None,
-        email=None,
-        phone=None,
-        date=None,
-        origin=None,
-        url=None):
+        first_name="",
+        last_name="",
+        middle_name="",
+        position="",
+        email="",
+        phone="",
+        date=datetime.datetime.now(),
+        origin="",
+        url=""):
         
-        query = """
-            INSERT INTO `user_data` (first_name, last_name, middle_name, email, phone, date, origin, url)
-            VALUES (:first_name, :last_name, :middle_name, :email, :phone, :date, :origin, :url);
+        query = f"""
+            INSERT INTO `{TABLE_NAME}` (first_name, last_name, middle_name, position, email, phone, date, origin, url)
+            VALUES (:first_name, :last_name, :middle_name, :position, :email, :phone, :date, :origin, :url);
         """
         
         query_params = {
             "first_name": first_name,
             "last_name": last_name,
             "middle_name": middle_name,
+            "position": position,
             "email": email,
             "phone": phone,
             "date": date,
@@ -69,12 +73,23 @@ class Storage:
         self._db.commit()
 
     def find_by_url(self, url):
-        query = """
+        query = f"""
             SELECT *
-            FROM `user_data`
+            FROM `{TABLE_NAME}`
             WHERE url = :url
         """
         params = {"url": url}
 
         query_results = self._curr.execute(query, params)
         return query_results.fetchone()
+
+
+def test():
+    db_path = "D:\Python\employee_finder\employee_finder_web\db.sqlite3"
+    storage = Storage(db_path=db_path)
+    storage.insert(
+        first_name="TName",
+        position="test_pos",
+        origin="test",
+        url="test_url"
+    )

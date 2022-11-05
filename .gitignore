@@ -1,9 +1,9 @@
 # Project
-cookies
-geckodriver.log
-problems_solutions.txt
-webdrivers
-test.py
+scrapper/cookies
+scrapper/geckodriver.log
+scrapper/problems_solutions.txt
+scrapper/webdrivers
+scrapper/test.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

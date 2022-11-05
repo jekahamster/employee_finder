@@ -1,2 +1,6 @@
 requests
-selenium==4.4.3
+selenium
+selenium-requests
+django
+tqdm
+beautifulsoup4
