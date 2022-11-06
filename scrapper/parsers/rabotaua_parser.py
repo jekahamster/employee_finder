@@ -8,14 +8,37 @@ import sqlite3
 from tqdm import tqdm
 from datetime import datetime
 from defines import DB_PATH
+from defines import SEO_TAGS_CACHE
 from driver_builder import build_chrome_driver
 from .base_parser import BaseParser
-from .storage import Storage
+from storage import Storage
 from selenium.webdriver.common.by import By
-from seleniumrequests import Chrome
 from selenium.webdriver.support.ui import WebDriverWait
 
 
+class _SeoTagsCacher:
+    def __init__(self, cache_path=SEO_TAGS_CACHE):
+        self._cache_path = cache_path
+        
+        try: 
+            cache_file = open(cache_path, "r", encoding="UTF-8")
+            cached_seo_tags = cache_file.readlines()
+        except FileNotFoundError:
+            cached_seo_tags = []
+            open(cache_path, "a", encoding="utf-8")
+
+        self._cached = set(cached_seo_tags)
+        self._cache_file = open(cache_path, "a", encoding="UTF-8")
+
+    def cache(self, tag):
+        if tag in self._cached:
+            return False
+        
+        self._cache_file.write(f"{tag}\n")
+        self._cache_file.flush()
+        self._cached.add(tag)
+
+        return True
 
 
 class RabotaUaParser(BaseParser):
@@ -36,14 +59,15 @@ class RabotaUaParser(BaseParser):
 
     _resume_id_pattern = re.compile(r"[\d]+")
 
-    def __init__(self, driver=None, db_path=DB_PATH, n_pages=100):
+    def __init__(self, driver=None, db_path=DB_PATH, n_pages=100, cache_path=SEO_TAGS_CACHE):
         self._driver = driver or build_chrome_driver(headless=True, tor=False, no_logging=False, detach=False)
         self._db_path = db_path
         self._n_pages = n_pages
         self._storage = Storage(db_path=db_path)
         self._login_page = "https://rabota.ua/ua/employer/login"
         self._main_page = "https://rabota.ua/"
-        self._pages_url_pattern = "https://rabota.ua/ua/candidates/all/%D0%B2%D1%81%D1%8F_%D1%83%D0%BA%D1%80%D0%B0%D0%B8%D0%BD%D0%B0?pg={}&rubrics=%5B%221%22%5D".format
+        self._pages_url_pattern = r"https://rabota.ua/ua/candidates/all/%D0%B2%D1%81%D1%8F_%D1%83%D0%BA%D1%80%D0%B0%D0%B8%D0%BD%D0%B0?pg={}&rubrics=%5B%221%22%5D".format
+        self._seo_tags_cacher = _SeoTagsCacher(cache_path=cache_path)
 
     def login(self, login, password):
         self._driver.get(self._login_page)
@@ -95,7 +119,28 @@ class RabotaUaParser(BaseParser):
             resume_urls.append(resume_url)
 
         return resume_urls
-        
+    
+    def _get_headers(self):
+        jwt_token = self._driver.get_cookie("jwt-token")["value"]
+
+        headers = {
+            "accept": "application/json, text/plain, */*",
+            "accept-language": "ru-RU,ru-UA;q=0.9,ru;q=0.8,uk-UA;q=0.7,uk;q=0.6,en-US;q=0.5,en;q=0.4",
+            "authorization": f"Bearer {jwt_token}",
+            "origin": "https://rabota.ua",
+            # "referer": f"https://rabota.ua/ua/candidates/{user_id}",
+            "sec-ch-ua": '"Google Chrome";v="107", "Chromium";v="107", "Not=A?Brand";v="24"',
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+            # "accept-encoding": "gzip, deflate, br",
+            # "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            # "sec-fetch-dest": "empty",
+            # "sec-fetch-mode": "cors",
+            # "sec-fetch-site": "same-site",
+            # "authority": "employer-api.rabota.ua"
+        }
+        return headers
+
     def _get_resume_data(self, url):
         user_by_url = self._storage.find_by_url(url)
         if user_by_url:
@@ -104,8 +149,13 @@ class RabotaUaParser(BaseParser):
         resume_id = self._resume_id_pattern.search(url).group()
         resume_request_url = f"https://employer-api.rabota.ua/resume/{resume_id}"
 
-        resume_data_response = requests.request("GET", resume_request_url)
-        resume_data_response_json = json.loads(resume_data_response.text)
+        resume_data_response = requests.request("GET", resume_request_url, headers=self._get_headers())
+        try:
+            resume_data_response_json = json.loads(resume_data_response.text)
+        except Exception as e:
+            print()
+            print(f"Empty response from: {resume_request_url}")
+            raise e
 
         spetiality = resume_data_response_json.get("speciality", "")
         seo_tags = resume_data_response_json.get("seoTags", [])
@@ -125,6 +175,7 @@ class RabotaUaParser(BaseParser):
         for seo_tag in seo_tags:
             pz_name = seo_tag.get("pzName", "")
             spetiality += f", {pz_name}"
+            self._seo_tags_cacher.cache(pz_name)
         
         user_data = {
             "first_name": first_name,
@@ -145,7 +196,7 @@ class RabotaUaParser(BaseParser):
         resume_urls = []
         resumes_data = []
 
-        for page_index in tqdm(range(1, self._n_pages)):
+        for page_index in tqdm(range(1, self._n_pages+1)):
             url = self._pages_url_pattern(page_index)
             resume_urls_from_page = self._get_resume_pages(url) 
             resume_urls.extend(resume_urls_from_page)
@@ -159,16 +210,6 @@ class RabotaUaParser(BaseParser):
                 print(e)
                 continue
 
-            try:
-                self._storage.insert(
-                    first_name=resume_data["first_name"],
-                    last_name=resume_data["last_name"],
-                    middle_name=resume_data["middle_name"],
-                    position=resume_data["position"],
-                    email=resume_data["email"],
-                    phone=resume_data["phone"],
-                    origin=resume_data["origin"],
-                    url=resume_data["url"]
-                )
-            except sqlite3.IntegrityError:
-                warnings.warn(f"Person {resume_data['url']} in database")
+        return resumes_data
+
+            
