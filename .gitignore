@@ -4,6 +4,7 @@ scrapper/geckodriver.log
 scrapper/problems_solutions.txt
 scrapper/webdrivers
 scrapper/test.py
+scrapper/cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
