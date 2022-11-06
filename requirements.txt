@@ -1,6 +1,5 @@
 requests
 selenium
-selenium-requests
 django
 tqdm
 beautifulsoup4
