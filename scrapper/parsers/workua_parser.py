@@ -2,13 +2,13 @@ import os
 import selenium
 import sqlite3
 import warnings
+import storage
 
 from datetime import datetime
-from . import storage
 from .base_parser import BaseParser
 from driver_builder import build_chrome_driver
 from tqdm import tqdm
-from defines import DB_PATH, DOWNLOAD_ROOT
+from defines import DOWNLOAD_ROOT
 from defines import WEBDRIVER_PATH
 from defines import BINARY_LOCATION
 from defines import DB_PATH
@@ -153,20 +153,6 @@ class WorkUaParser(BaseParser):
         for resume_url in tqdm(resume_urls):
             resume_data = self._get_resume_data(resume_url)
             resumes_data.append(resume_data)
-            
-            try:
-                self._storage.insert(
-                    first_name=resume_data["first_name"],
-                    last_name=resume_data["last_name"],
-                    middle_name=resume_data["middle_name"],
-                    position=resume_data["position"],
-                    email=resume_data["email"],
-                    phone=resume_data["phone"],
-                    origin=resume_data["origin"],
-                    url=resume_data["url"]
-                )
-            except sqlite3.IntegrityError:
-                warnings.warn(f"Person {resume_data['url']} in database")
 
         return resumes_data
 
