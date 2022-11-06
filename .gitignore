@@ -1,10 +1,10 @@
 # Project
-scrapper/cookies
-scrapper/geckodriver.log
-scrapper/problems_solutions.txt
-scrapper/webdrivers
-scrapper/test.py
-scrapper/cache
+scraper/cookies
+scraper/geckodriver.log
+scraper/problems_solutions.txt
+scraper/webdrivers
+scraper/test.py
+scraper/cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

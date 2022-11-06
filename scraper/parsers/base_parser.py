@@ -4,5 +4,5 @@ from abc import abstractmethod
 
 class BaseParser(ABC):
     @abstractmethod
-    def get_data(self):
+    def get_data(self, *args, **kwargs):
         return NotImplemented
