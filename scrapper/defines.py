@@ -3,6 +3,7 @@ import pathlib
 
 ROOT_DIR = pathlib.Path(os.path.dirname(os.path.abspath(__file__)))
 COOKIES_DIR = ROOT_DIR / "cookies"
+SEO_TAGS_CACHE = ROOT_DIR / "cache" / "seo_tags.txt"
 DRIVERS_ROOT = ROOT_DIR / "webdrivers"
 DOWNLOAD_ROOT = ROOT_DIR / "downloads"
 DB_PATH = ROOT_DIR / ".." / "employee_finder_web" / "db.sqlite3"
