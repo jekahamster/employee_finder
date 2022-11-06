@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from .base_parser import BaseParser
 from driver_builder import build_chrome_driver
 from selenium.webdriver.common.by import By
-from .storage import Storage
+from storage import Storage
 
 
 class DjinniParser(BaseParser):
@@ -201,21 +201,6 @@ class DjinniParser(BaseParser):
             except Exception as e:
                 print(e)
                 print(f"URL: {resume_page_url}")
-
-        for resume_data in resumes_data:
-            try:
-                self._storage.insert(
-                    first_name=resume_data["first_name"],
-                    last_name=resume_data["last_name"],
-                    middle_name=resume_data["middle_name"],
-                    position=resume_data["position"],
-                    email=resume_data["email"],
-                    phone=resume_data["phone"],
-                    origin=resume_data["origin"],
-                    url=resume_data["url"]
-                )
-            except sqlite3.IntegrityError:
-                warnings.warn(f"Person {resume_data['url']} in database")
 
         return resumes_data
         
