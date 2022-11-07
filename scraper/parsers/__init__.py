@@ -8,5 +8,6 @@ __all__ = [
     "workua_parser", 
     "rabotaua_parser",
     "djinni_parser",
+    "linkedin_parser"
 ]
 
